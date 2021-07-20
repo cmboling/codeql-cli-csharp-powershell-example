@@ -1,0 +1,16 @@
+/Glav.CacheAdapter.ExampleUsage/bin
+/Glav.CacheAdapter.ExampleUsage/obj
+/Glav.CacheAdapter.Tests/bin
+/Glav.CacheAdapter.Tests/obj
+/Glav.CacheAdapter/obj
+/Glav.CacheAdapter/bin
+/packages
+/.vs
+*.dll
+/Glav.CacheAdapter/Glav.CacheAdapter.csproj.user
+/TestResults
+/Glav.CacheAdapter.Package/Packages/Glav.CacheAdapter/*.nupkg
+/Glav.CacheAdapter.Package/Packages/Glav.CacheAdapter/content
+/Glav.CacheAdapter.Package/Packages/Glav.CacheAdapter/lib
+/Glav.CacheAdapter.Package/Packages/Glav.CacheAdapter.Core/lib
+/Glav.CacheAdapter.Package/Packages/Glav.CacheAdapter.Core/*.nupkg

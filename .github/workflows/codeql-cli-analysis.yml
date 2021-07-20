@@ -1,0 +1,80 @@
+name: Code scanning via CodeQL CLI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    
+env:
+  WORKSPACE:  D:\a
+  # GITHUB_WORKPACE is /home/runner/work/repo-name/repo-name if using the Checkout action
+  # https://docs.github.com/en/actions/reference/environment-variables
+  # The purpose of defining WORKSPACE is so that the codeql-home, codeql-database, codeql-sarif-results directories are at the same level outside of source root directory
+  
+  # CODEQL DIRECTORIES, FILES
+  CODEQL_HOME:  D:\a\codeql-home
+  CODEQL_BINARY: D:\a\codeql-home\codeql\codeql.exe
+  CODEQL_DATABASE:  D:\a\codeql-database
+  CODEQL_SARIF:  D:\a\codeql-sarif-results
+  CODEQL_SARIF_FILE:  D:\a\codeql-sarif-results\code-scanning-alerts.sarif
+  
+  CODEQL_LANGUAGE: csharp
+  CODEQL_QUERIES:  D:\a\codeql-home\codeql\qlpacks\codeql-csharp\codeql-suites\csharp-security-and-quality.qls
+
+jobs:
+  analyze:
+
+    runs-on: windows-latest
+
+    steps:
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      with:
+        vs-version: '16.10'
+
+    - name: Setup Required Directories and Files
+      run: |
+        cd ${{ env.WORKSPACE }}
+        mkdir ${{ env.CODEQL_HOME }}
+        mkdir ${{ env.CODEQL_SARIF }}
+        touch ${{ env.CODEQL_SARIF_FILE }}
+
+    - name: Download CodeQL Bundle
+      run: |
+        cd ${{ env.CODEQL_HOME }}
+        Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-win64.tar.gz -OutFile ${{ env.CODEQL_HOME }}\codeql-bundle-win64.tar.gz
+        tar zxf ./codeql-bundle-win64.tar.gz
+
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Create CodeQL Database
+      run: |
+         Invoke-Expression "${{ env.CODEQL_BINARY }} database create ${{ env.CODEQL_DATABASE }} --language=${{ env.CODEQL_LANGUAGE }} --command='nuget restore' --command='msbuild /p:UseSharedCompilation=false'"
+
+    - name: Perform CodeQL Analysis
+      run: |
+         Invoke-Expression "${{ env.CODEQL_BINARY }} database analyze ${{ env.CODEQL_DATABASE }} ${{ env.CODEQL_QUERIES }} --format=sarif-latest --output=${{ env.CODEQL_SARIF_FILE }}"
+        
+    - name: Upload CodeQL SARIF Results
+      run: |
+         Invoke-Expression "${{ env.CODEQL_BINARY }} github upload-results --repository=$GITHUB_REPOSITORY --ref=$GITHUB_REF --commit=$GITHUB_SHA --sarif=${{ env.CODEQL_SARIF_FILE }} --github-auth-stdin=${{ secrets.GITHUB_TOKEN }}" 
+
+    - name: Zip CodeQL Database Directory (for testing/debugging purposes)
+      id: codeql-database-bundle
+      env:
+        LANGUAGE: ${{ matrix.language }}
+      run: |
+        7z a "${{ env.CODEQL_HOME }}\codeql-database-archive.zip" "${{ env.CODEQL_DATABASE }}"
+
+        echo "::set-output name=zip::codeql-database-archive"
+
+    - name: Upload CodeQL Database Directory (for testing/debugging purposes)
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.language }}-db
+        path: ${{ steps.codeql-database-bundle.outputs.zip }}
+

@@ -1,0 +1,31 @@
+name: "Code scanning via Actions"
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  CodeQL-Build:
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        queries: security-and-quality
+  
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      with:
+        vs-version: '16.10'
+
+    - run: |
+        nuget restore
+        msbuild /p:UseSharedCompilation=false 
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
