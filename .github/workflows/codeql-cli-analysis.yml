@@ -47,6 +47,8 @@ jobs:
         cd ${{ env.CODEQL_HOME }}
         Invoke-WebRequest -uri https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-win64.tar.gz -OutFile ${{ env.CODEQL_HOME }}\codeql-bundle-win64.tar.gz
         tar zxf ./codeql-bundle-win64.tar.gz
+        
+        Invoke-Expression "${{ env.CODEQL_BINARY }} --version"
 
     - name: Checkout Repository
       uses: actions/checkout@v2
